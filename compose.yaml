@@ -1,0 +1,258 @@
+services:
+
+  node:
+    environment:
+    - NETWORK=preview
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: socat -u OPEN:/dev/null UNIX-CONNECT:/ipc/node.socket
+      timeout: 5s
+    image: inputoutput/cardano-node:1.35.4
+    volumes:
+    - shared:/ipc
+    - node-db:/opt/cardano/data
+
+  postgres:
+    environment:
+    - POSTGRES_LOGGING=true
+    - POSTGRES_USER=postgres
+    - POSTGRES_HOST_AUTH_METHOD=trust
+    - TZ=UTC
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+      - CMD
+      - pg_isready
+      - -U
+      - postgres
+      timeout: 5s
+    image: postgres:11.5-alpine
+    logging:
+      driver: json-file
+      options:
+        max-file: '10'
+        max-size: 200k
+    restart: unless-stopped
+    volumes:
+    - postgres:/var/lib/postgresql/data
+    - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # marlowe-chain-indexer:
+  #   command:
+  #   - /exec/run-marlowe-chain-indexer
+  #   - --testnet-magic
+  #   - '2'
+  #   - --socket-path
+  #   - /ipc/node.socket
+  #   - --database-uri
+  #   - postgresql://postgres@postgres/chain
+  #   - --genesis-config-file
+  #   - /nix/store/xl77p1mriihpjx8vzdb6fig398302204-byron-genesis.json
+  #   - --genesis-config-file-hash
+  #   - 72593f260b66f26bef4fc50b38a8f24d3d3633ad2e854eaf73039eb9402706f1
+  #   - --shelley-genesis-config-file
+  #   - /nix/store/34rxw0240zp0dfnqcprgf8s7h0y2rngm-shelley-genesis.json
+  #   - --log-config-file
+  #   - ./marlowe-chain-indexer.log.config
+  #   depends_on:
+  #     node:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     retries: 0
+  #     test: /exec/run-sqitch -h postgres
+  #   image: alpine:3.16.2
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # chainseekd:
+  #   command:
+  #   - /exec/run-chainseekd
+  #   - --testnet-magic
+  #   - '2'
+  #   - --socket-path
+  #   - /ipc/node.socket
+  #   - --database-uri
+  #   - postgresql://postgres@postgres/chain
+  #   - --host
+  #   - 0.0.0.0
+  #   - --log-config-file
+  #   - ./chainseekd.log.config
+  #   depends_on:
+  #     marlowe-chain-indexer:
+  #       condition: service_healthy
+  #     node:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 5
+  #     test: netstat -tulpn | grep LISTEN | grep 3715
+  #     timeout: 5s
+  #   image: alpine:3.16.2
+  #   ports:
+  #   - '3715'
+  #   - '3716'
+  #   - '3720'
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # marlowe-discovery:
+  #   command:
+  #   - /exec/run-marlowe-discovery
+  #   - --chain-seek-host
+  #   - chainseekd
+  #   - --host
+  #   - 0.0.0.0
+  #   - --log-config-file
+  #   - ./marlowe-discovery.log.config
+  #   depends_on:
+  #     chainseekd:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 5
+  #     test: netstat -tulpn | grep LISTEN | grep 3721
+  #     timeout: 5s
+  #   image: alpine:3.16.2
+  #   ports:
+  #   - '3721'
+  #   - '3722'
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # marlowe-history:
+  #   command:
+  #   - /exec/run-marlowe-history
+  #   - --chain-seek-host
+  #   - chainseekd
+  #   - --host
+  #   - 0.0.0.0
+  #   - --log-config-file
+  #   - ./marlowe-history.log.config
+  #   depends_on:
+  #     chainseekd:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 5
+  #     test: netstat -tulpn | grep LISTEN | grep 3717
+  #     timeout: 5s
+  #   image: alpine:3.16.2
+  #   ports:
+  #   - '3717'
+  #   - '3718'
+  #   - '3719'
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # marlowe-indexer:
+  #   command:
+  #   - /exec/run-marlowe-indexer
+  #   - --chain-seek-host
+  #   - chainseekd
+  #   - --log-config-file
+  #   - ./marlowe-indexer.log.config
+  #   - --database-uri
+  #   - postgresql://postgres@postgres/chain
+  #   depends_on:
+  #     chainseekd:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     retries: 0
+  #     test: /exec/run-sqitch-marlowe-indexer -h postgres
+  #   image: alpine:3.16.2
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # marlowe-tx:
+  #   command:
+  #   - /exec/run-marlowe-tx
+  #   - --chain-seek-host
+  #   - chainseekd
+  #   - --host
+  #   - 0.0.0.0
+  #   - --log-config-file
+  #   - ./marlowe-tx.log.config
+  #   depends_on:
+  #     chainseekd:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 5
+  #     test: netstat -tulpn | grep LISTEN | grep 3723
+  #     timeout: 5s
+  #   image: alpine:3.16.2
+  #   ports:
+  #   - '3723'
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+  # web:
+  #   command:
+  #   - /exec/run-marlowe-web-server
+  #   - --history-host
+  #   - marlowe-history
+  #   - --discovery-host
+  #   - marlowe-discovery
+  #   - --tx-host
+  #   - marlowe-tx
+  #   - --enable-open-api
+  #   - --access-control-allow-origin-all
+  #   depends_on:
+  #     marlowe-discovery:
+  #       condition: service_healthy
+  #     marlowe-history:
+  #       condition: service_healthy
+  #     marlowe-tx:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 5
+  #     test: netstat -tulpn | grep LISTEN | grep 8080
+  #     timeout: 5s
+  #   image: alpine:3.16.2
+  #   ports:
+  #   - '8080'
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./:/src
+  #   - /nix:/nix
+  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
+  #   - shared:/ipc
+
+volumes:
+  node-db: null
+  postgres: null
+  shared: null
+
