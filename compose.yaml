@@ -2,7 +2,7 @@ services:
 
   node:
     environment:
-    - NETWORK=preview
+      - NETWORK=${NETWORK:?err}
     healthcheck:
       interval: 10s
       retries: 5
@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
     volumes:
     - postgres:/var/lib/postgresql/data
-    - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    - ./${NETWORK:?err}/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   # marlowe-chain-indexer:
   #   command:
