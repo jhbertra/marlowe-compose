@@ -17,7 +17,7 @@ services:
     environment:
     - POSTGRES_LOGGING=true
     - POSTGRES_USER=postgres
-    - POSTGRES_HOST_AUTH_METHOD=trust
+    - POSTGRES_PASSWORD=postgres
     - TZ=UTC
     healthcheck:
       interval: 10s
@@ -39,38 +39,21 @@ services:
     - postgres:/var/lib/postgresql/data
     - ./${NETWORK:?err}/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  # marlowe-chain-indexer:
-  #   command:
-  #   - /exec/run-marlowe-chain-indexer
-  #   - --testnet-magic
-  #   - '2'
-  #   - --socket-path
-  #   - /ipc/node.socket
-  #   - --database-uri
-  #   - postgresql://postgres@postgres/chain
-  #   - --genesis-config-file
-  #   - /nix/store/xl77p1mriihpjx8vzdb6fig398302204-byron-genesis.json
-  #   - --genesis-config-file-hash
-  #   - 72593f260b66f26bef4fc50b38a8f24d3d3633ad2e854eaf73039eb9402706f1
-  #   - --shelley-genesis-config-file
-  #   - /nix/store/34rxw0240zp0dfnqcprgf8s7h0y2rngm-shelley-genesis.json
-  #   - --log-config-file
-  #   - ./marlowe-chain-indexer.log.config
-  #   depends_on:
-  #     node:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     retries: 0
-  #     test: /exec/run-sqitch -h postgres
-  #   image: alpine:3.16.2
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
+  chain-indexer:
+    environment:
+    - NODE_CONFIG=/node/config.json
+    - DB_NAME=chain_${NETWORK:?err}
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_HOST=postgres
+    - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+    image: iohkbuild/marlowe:chain-indexer-20230124
+    user: 0:0
+    restart: unless-stopped
+    volumes:
+    - shared:/ipc
+    - ./${NETWORK:?err}/node:/node
+    - tmp:/tmp
 
   # chainseekd:
   #   command:
@@ -255,4 +238,5 @@ volumes:
   node-db: null
   postgres: null
   shared: null
+  tmp: null
 
