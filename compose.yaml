@@ -9,6 +9,7 @@ services:
       test: socat -u OPEN:/dev/null UNIX-CONNECT:/ipc/node.socket
       timeout: 5s
     image: inputoutput/cardano-node:1.35.4
+    restart: unless-stopped
     volumes:
     - shared:/ipc
     - node-db:/opt/cardano/data
@@ -22,11 +23,7 @@ services:
     healthcheck:
       interval: 10s
       retries: 5
-      test:
-      - CMD
-      - pg_isready
-      - -U
-      - postgres
+      test: pg_isready -U postgres
       timeout: 5s
     image: postgres:11.5-alpine
     logging:
