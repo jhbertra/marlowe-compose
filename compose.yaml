@@ -133,39 +133,6 @@ services:
     ports:
     - 3723
 
-  # web:
-  #   command:
-  #   - /exec/run-marlowe-web-server
-  #   - --history-host
-  #   - marlowe-history
-  #   - --discovery-host
-  #   - marlowe-discovery
-  #   - --tx-host
-  #   - marlowe-tx
-  #   - --enable-open-api
-  #   - --access-control-allow-origin-all
-  #   depends_on:
-  #     marlowe-discovery:
-  #       condition: service_healthy
-  #     marlowe-history:
-  #       condition: service_healthy
-  #     marlowe-tx:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     interval: 10s
-  #     retries: 5
-  #     test: netstat -tulpn | grep LISTEN | grep 8080
-  #     timeout: 5s
-  #   image: alpine:3.16.2
-  #   ports:
-  #   - '8080'
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
-
 volumes:
   node-db: null
   postgres: null
