@@ -5,7 +5,7 @@ services:
       - NETWORK=${NETWORK:?err}
     healthcheck:
       interval: 10s
-      retries: 5
+      retries: 10
       test: socat -u OPEN:/dev/null UNIX-CONNECT:/ipc/node.socket
       timeout: 5s
     image: inputoutput/cardano-node:1.35.4
@@ -47,6 +47,11 @@ services:
     - DB_PASS=postgres
     - DB_HOST=postgres
     - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+    depends_on:
+      node:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     image: iohkbuild/marlowe:chain-indexer-20230124
     user: 0:0
     restart: unless-stopped
@@ -55,42 +60,29 @@ services:
     - ./${NETWORK:?err}/node:/node
     - tmp:/tmp
 
-  # chainseekd:
-  #   command:
-  #   - /exec/run-chainseekd
-  #   - --testnet-magic
-  #   - '2'
-  #   - --socket-path
-  #   - /ipc/node.socket
-  #   - --database-uri
-  #   - postgresql://postgres@postgres/chain
-  #   - --host
-  #   - 0.0.0.0
-  #   - --log-config-file
-  #   - ./chainseekd.log.config
-  #   depends_on:
-  #     marlowe-chain-indexer:
-  #       condition: service_healthy
-  #     node:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     interval: 10s
-  #     retries: 5
-  #     test: netstat -tulpn | grep LISTEN | grep 3715
-  #     timeout: 5s
-  #   image: alpine:3.16.2
-  #   ports:
-  #   - '3715'
-  #   - '3716'
-  #   - '3720'
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
+  chainseekd:
+    environment:
+    - NODE_CONFIG=/node/config.json
+    - HOST=0.0.0.0
+    - PORT=3715
+    - QUERY_PORT=3716
+    - JOB_PORT=3720
+    - DB_NAME=chain_${NETWORK:?err}
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_HOST=postgres
+    - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+    depends_on:
+      chain-indexer:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    image: iohkbuild/marlowe:chainseekd-20230124
+    user: 0:0
+    restart: unless-stopped
+    volumes:
+    - shared:/ipc
+    - ./${NETWORK:?err}/node:/node
 
   # marlowe-discovery:
   #   command:
