@@ -84,114 +84,54 @@ services:
     - shared:/ipc
     - ./${NETWORK:?err}/node:/node
 
-  # marlowe-discovery:
-  #   command:
-  #   - /exec/run-marlowe-discovery
-  #   - --chain-seek-host
-  #   - chainseekd
-  #   - --host
-  #   - 0.0.0.0
-  #   - --log-config-file
-  #   - ./marlowe-discovery.log.config
-  #   depends_on:
-  #     chainseekd:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     interval: 10s
-  #     retries: 5
-  #     test: netstat -tulpn | grep LISTEN | grep 3721
-  #     timeout: 5s
-  #   image: alpine:3.16.2
-  #   ports:
-  #   - '3721'
-  #   - '3722'
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
+  discovery:
+    environment:
+    - HOST=0.0.0.0
+    - PORT=3721
+    - SYNC_PORT=3722
+    - CHAINSEEKD_HOST=chainseekd
+    - CHAINSEEKD_PORT=3715
+    - CHAINSEEKD_QUERY_PORT=3716
+    depends_on:
+      - chainseekd
+    image: iohkbuild/marlowe:discovery-20230123
+    restart: unless-stopped
+    ports:
+    - 3721
+    - 3722
 
-  # marlowe-history:
-  #   command:
-  #   - /exec/run-marlowe-history
-  #   - --chain-seek-host
-  #   - chainseekd
-  #   - --host
-  #   - 0.0.0.0
-  #   - --log-config-file
-  #   - ./marlowe-history.log.config
-  #   depends_on:
-  #     chainseekd:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     interval: 10s
-  #     retries: 5
-  #     test: netstat -tulpn | grep LISTEN | grep 3717
-  #     timeout: 5s
-  #   image: alpine:3.16.2
-  #   ports:
-  #   - '3717'
-  #   - '3718'
-  #   - '3719'
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
+  history:
+    environment:
+    - HOST=0.0.0.0
+    - PORT=3717
+    - QUERY_PORT=3718
+    - SYNC_PORT=3719
+    - CHAINSEEKD_HOST=chainseekd
+    - CHAINSEEKD_PORT=3715
+    - CHAINSEEKD_QUERY_PORT=3716
+    depends_on:
+      - chainseekd
+    image: iohkbuild/marlowe:history-20230123
+    restart: unless-stopped
+    ports:
+    - 3717
+    - 3718
+    - 3719
 
-  # marlowe-indexer:
-  #   command:
-  #   - /exec/run-marlowe-indexer
-  #   - --chain-seek-host
-  #   - chainseekd
-  #   - --log-config-file
-  #   - ./marlowe-indexer.log.config
-  #   - --database-uri
-  #   - postgresql://postgres@postgres/chain
-  #   depends_on:
-  #     chainseekd:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     retries: 0
-  #     test: /exec/run-sqitch-marlowe-indexer -h postgres
-  #   image: alpine:3.16.2
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
-
-  # marlowe-tx:
-  #   command:
-  #   - /exec/run-marlowe-tx
-  #   - --chain-seek-host
-  #   - chainseekd
-  #   - --host
-  #   - 0.0.0.0
-  #   - --log-config-file
-  #   - ./marlowe-tx.log.config
-  #   depends_on:
-  #     chainseekd:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     interval: 10s
-  #     retries: 5
-  #     test: netstat -tulpn | grep LISTEN | grep 3723
-  #     timeout: 5s
-  #   image: alpine:3.16.2
-  #   ports:
-  #   - '3723'
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./:/src
-  #   - /nix:/nix
-  #   - /nix/store/hskigvn86na44481j7ib1884dh20xhzl-symlinks:/exec
-  #   - shared:/ipc
+  tx:
+    environment:
+    - HOST=0.0.0.0
+    - PORT=3723
+    - CHAINSEEKD_HOST=chainseekd
+    - CHAINSEEKD_PORT=3715
+    - CHAINSEEKD_QUERY_PORT=3716
+    - CHAINSEEKD_COMMAND_PORT=3720
+    depends_on:
+      - chainseekd
+    image: iohkbuild/marlowe:tx-20230123
+    restart: unless-stopped
+    ports:
+    - 3723
 
   # web:
   #   command:
