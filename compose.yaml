@@ -49,13 +49,12 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-indexer-20230124
+    image: iohkbuild/marlowe:chain-indexer-20230213
     user: 0:0
     restart: unless-stopped
     volumes:
     - shared:/ipc
     - ./${NETWORK:?err}/node:/node
-    - tmp:/tmp
 
   chainseekd:
     environment:
@@ -74,46 +73,52 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chainseekd-20230124
+    image: iohkbuild/marlowe:chainseekd-20230213
     user: 0:0
     restart: unless-stopped
     volumes:
     - shared:/ipc
     - ./${NETWORK:?err}/node:/node
 
-  discovery:
+  indexer:
     environment:
-    - HOST=0.0.0.0
-    - PORT=3721
-    - SYNC_PORT=3722
+    - DB_NAME=chain_${NETWORK:?err}
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_HOST=postgres
     - CHAINSEEKD_HOST=chainseekd
     - CHAINSEEKD_PORT=3715
     - CHAINSEEKD_QUERY_PORT=3716
+    - CHAINSEEKD_COMMAND_PORT=3720
     depends_on:
-      - chainseekd
-    image: iohkbuild/marlowe:discovery-20230123
+      chainseekd:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    image: iohkbuild/marlowe:indexer-20230213
     restart: unless-stopped
-    ports:
-    - 3721
-    - 3722
 
-  history:
+  sync:
     environment:
     - HOST=0.0.0.0
-    - PORT=3717
-    - QUERY_PORT=3718
-    - SYNC_PORT=3719
-    - CHAINSEEKD_HOST=chainseekd
-    - CHAINSEEKD_PORT=3715
-    - CHAINSEEKD_QUERY_PORT=3716
+    - MARLOWE_SYNC_PORT=3724
+    - MARLOWE_HEADER_SYNC_PORT=3725
+    - MARLOWE_QUERY_PORT=3726
+    - DB_NAME=chain_${NETWORK:?err}
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_HOST=postgres
     depends_on:
-      - chainseekd
-    image: iohkbuild/marlowe:history-20230123
+      indexer:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    image: iohkbuild/marlowe:sync-20230213
     restart: unless-stopped
     ports:
-    - 3717
-    - 3718
-    - 3719
+    - 3724
+    - 3725
+    - 3726
 
   tx:
     environment:
@@ -125,14 +130,28 @@ services:
     - CHAINSEEKD_COMMAND_PORT=3720
     depends_on:
       - chainseekd
-    image: iohkbuild/marlowe:tx-20230123
+    image: iohkbuild/marlowe:tx-20230213
     restart: unless-stopped
     ports:
     - 3723
+
+  web-server:
+    environment:
+    - PORT=80
+    - TX_HOST=tx
+    - TX_PORT=3723
+    - SYNC_HOST=sync
+    - MARLOWE_QUERY_PORT=3726
+    depends_on:
+      - sync
+      - tx
+    image: iohkbuild/marlowe:web-server-20230213
+    restart: unless-stopped
+    ports:
+    - 80
 
 volumes:
   node-db: null
   postgres: null
   shared: null
-  tmp: null
 
