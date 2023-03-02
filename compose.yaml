@@ -49,14 +49,14 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-indexer-20230213
+    image: iohkbuild/marlowe:chain-indexer-20230221
     user: 0:0
     restart: unless-stopped
     volumes:
     - shared:/ipc
     - ./${NETWORK:?err}/node:/node
 
-  chainseekd:
+  chain-sync:
     environment:
     - NODE_CONFIG=/node/config.json
     - HOST=0.0.0.0
@@ -73,7 +73,7 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chainseekd-20230213
+    image: iohkbuild/marlowe:chain-sync-20230221
     user: 0:0
     restart: unless-stopped
     volumes:
@@ -86,16 +86,16 @@ services:
     - DB_USER=postgres
     - DB_PASS=postgres
     - DB_HOST=postgres
-    - CHAINSEEKD_HOST=chainseekd
-    - CHAINSEEKD_PORT=3715
-    - CHAINSEEKD_QUERY_PORT=3716
-    - CHAINSEEKD_COMMAND_PORT=3720
+    - MARLOWE_CHAIN_SYNC_HOST=chain-sync
+    - MARLOWE_CHAIN_SYNC_PORT=3715
+    - MARLOWE_CHAIN_SYNC_QUERY_PORT=3716
+    - MARLOWE_CHAIN_SYNC_COMMAND_PORT=3720
     depends_on:
-      chainseekd:
+      chain-sync:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:indexer-20230213
+    image: iohkbuild/marlowe:indexer-20230221
     restart: unless-stopped
 
   sync:
@@ -113,7 +113,7 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:sync-20230213
+    image: iohkbuild/marlowe:sync-20230221
     restart: unless-stopped
     ports:
     - 3724
@@ -124,13 +124,13 @@ services:
     environment:
     - HOST=0.0.0.0
     - PORT=3723
-    - CHAINSEEKD_HOST=chainseekd
-    - CHAINSEEKD_PORT=3715
-    - CHAINSEEKD_QUERY_PORT=3716
-    - CHAINSEEKD_COMMAND_PORT=3720
+    - MARLOWE_CHAIN_SYNC_HOST=chain-sync
+    - MARLOWE_CHAIN_SYNC_PORT=3715
+    - MARLOWE_CHAIN_SYNC_QUERY_PORT=3716
+    - MARLOWE_CHAIN_SYNC_COMMAND_PORT=3720
     depends_on:
-      - chainseekd
-    image: iohkbuild/marlowe:tx-20230213
+      - chain-sync
+    image: iohkbuild/marlowe:tx-20230221
     restart: unless-stopped
     ports:
     - 3723
@@ -145,7 +145,7 @@ services:
     depends_on:
       - sync
       - tx
-    image: iohkbuild/marlowe:web-server-20230213
+    image: iohkbuild/marlowe:web-server-20230221
     restart: unless-stopped
     ports:
     - 80
