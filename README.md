@@ -17,3 +17,6 @@ all services in the background. Use `docker-compose port proxy 3700` to find
 out which local port the runtime binary protocol is being served on. You can then
 pass this port to the `marlowe` command, or to `connectToMarloweRuntime` in the
 Haskell client library.
+
+Alternatively, you can communicate via the REST API. Use `docker-compose port web-server 80`
+to obtain the port over which the HTTP API is being served.
