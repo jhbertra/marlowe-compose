@@ -115,10 +115,6 @@ services:
         condition: service_healthy
     image: iohkbuild/marlowe:sync-20230302
     restart: unless-stopped
-    ports:
-    - 3724
-    - 3725
-    - 3726
 
   tx:
     environment:
@@ -132,8 +128,6 @@ services:
       - chain-sync
     image: iohkbuild/marlowe:tx-20230302
     restart: unless-stopped
-    ports:
-    - 3723
 
   proxy:
     environment:
