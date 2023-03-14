@@ -145,7 +145,7 @@ services:
     image: iohkbuild/marlowe:proxy-20230302
     restart: unless-stopped
     ports:
-    - 3700
+    - 3700:3700
 
   web-server:
     environment:
@@ -157,7 +157,7 @@ services:
     image: iohkbuild/marlowe:web-server-20230302
     restart: unless-stopped
     ports:
-    - 80
+    - 3780:80
 
 volumes:
   node-db: null
