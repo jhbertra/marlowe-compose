@@ -49,7 +49,7 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-indexer-20230302
+    image: iohkbuild/marlowe:chain-indexer-20230313
     user: 0:0
     restart: unless-stopped
     volumes:
@@ -73,7 +73,7 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-sync-20230302
+    image: iohkbuild/marlowe:chain-sync-20230313
     user: 0:0
     restart: unless-stopped
     volumes:
@@ -95,7 +95,7 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:indexer-20230302
+    image: iohkbuild/marlowe:indexer-20230313
     restart: unless-stopped
 
   sync:
@@ -113,7 +113,7 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:sync-20230302
+    image: iohkbuild/marlowe:sync-20230313
     restart: unless-stopped
 
   tx:
@@ -126,7 +126,7 @@ services:
     - MARLOWE_CHAIN_SYNC_COMMAND_PORT=3720
     depends_on:
       - chain-sync
-    image: iohkbuild/marlowe:tx-20230302
+    image: iohkbuild/marlowe:tx-20230313
     restart: unless-stopped
 
   proxy:
@@ -142,10 +142,10 @@ services:
     depends_on:
       - sync
       - tx
-    image: iohkbuild/marlowe:proxy-20230302
+    image: iohkbuild/marlowe:proxy-20230313
     restart: unless-stopped
     ports:
-    - 3700
+    - 3700:3700
 
   web-server:
     environment:
@@ -154,10 +154,10 @@ services:
     - RUNTIME_PORT=3700
     depends_on:
       - proxy
-    image: iohkbuild/marlowe:web-server-20230302
+    image: iohkbuild/marlowe:web-server-20230313
     restart: unless-stopped
     ports:
-    - 80
+    - 3780:80
 
 volumes:
   node-db: null
