@@ -44,12 +44,13 @@ services:
     - DB_PASS=postgres
     - DB_HOST=postgres
     - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+    - HTTP_PORT=8080
     depends_on:
       node:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-indexer-20230316
+    image: ghcr.io/input-output-hk/marlowe-chain-indexer:latest
     user: 0:0
     restart: unless-stopped
     volumes:
@@ -68,12 +69,13 @@ services:
     - DB_PASS=postgres
     - DB_HOST=postgres
     - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+    - HTTP_PORT=8080
     depends_on:
       chain-indexer:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:chain-sync-20230316
+    image: ghcr.io/input-output-hk/marlowe-chain-sync:latest
     user: 0:0
     restart: unless-stopped
     volumes:
@@ -90,12 +92,13 @@ services:
     - MARLOWE_CHAIN_SYNC_PORT=3715
     - MARLOWE_CHAIN_SYNC_QUERY_PORT=3716
     - MARLOWE_CHAIN_SYNC_COMMAND_PORT=3720
+    - HTTP_PORT=8080
     depends_on:
       chain-sync:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:indexer-20230316
+    image: ghcr.io/input-output-hk/marlowe-indexer:latest
     restart: unless-stopped
 
   sync:
@@ -108,12 +111,13 @@ services:
     - DB_USER=postgres
     - DB_PASS=postgres
     - DB_HOST=postgres
+    - HTTP_PORT=8080
     depends_on:
       indexer:
         condition: service_started
       postgres:
         condition: service_healthy
-    image: iohkbuild/marlowe:sync-20230316
+    image: ghcr.io/input-output-hk/marlowe-sync:latest
     restart: unless-stopped
 
   tx:
@@ -124,9 +128,10 @@ services:
     - MARLOWE_CHAIN_SYNC_PORT=3715
     - MARLOWE_CHAIN_SYNC_QUERY_PORT=3716
     - MARLOWE_CHAIN_SYNC_COMMAND_PORT=3720
+    - HTTP_PORT=8080
     depends_on:
       - chain-sync
-    image: iohkbuild/marlowe:tx-20230316
+    image: ghcr.io/input-output-hk/marlowe-tx:latest
     restart: unless-stopped
 
   proxy:
@@ -139,10 +144,11 @@ services:
     - MARLOWE_SYNC_PORT=3724
     - MARLOWE_HEADER_SYNC_PORT=3725
     - MARLOWE_QUERY_PORT=3726
+    - HTTP_PORT=8080
     depends_on:
       - sync
       - tx
-    image: iohkbuild/marlowe:proxy-20230316
+    image: ghcr.io/input-output-hk/marlowe-proxy:latest
     restart: unless-stopped
     ports:
     - 3700:3700
@@ -154,7 +160,7 @@ services:
     - RUNTIME_PORT=3700
     depends_on:
       - proxy
-    image: iohkbuild/marlowe:web-server-20230316
+    image: ghcr.io/input-output-hk/marlowe-web-server:latest
     restart: unless-stopped
     ports:
     - 3780:80
